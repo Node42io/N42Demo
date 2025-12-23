@@ -326,6 +326,47 @@
             border-right-color: var(--accent-teal);
         }
         
+        /* Mobile compact depth indicator - shows only 3 levels */
+        .depth-indicator-mobile {
+            display: none;
+            position: fixed;
+            top: 60px;
+            right: 12px;
+            z-index: 100;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            font-family: 'JetBrains Mono', monospace;
+            pointer-events: none;
+        }
+        
+        .depth-mobile-item {
+            font-size: 9px;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .depth-mobile-item.prev {
+            color: var(--text-muted);
+            opacity: 0.4;
+        }
+        
+        .depth-mobile-item.current {
+            color: var(--accent-teal);
+            background: rgba(0, 166, 160, 0.15);
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 10px;
+        }
+        
+        .depth-mobile-item.next {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+        
         /* Restriction badges */
         .restriction-badge {
             display: inline-block;
@@ -404,9 +445,13 @@
                 right: auto !important;
             }
             
-            /* Hide depth indicator on tablets and mobile */
+            /* Hide desktop depth indicator, show mobile version */
             .depth-indicator {
                 display: none !important;
+            }
+            
+            .depth-indicator-mobile {
+                display: flex !important;
             }
             
             .floating-label {
@@ -635,6 +680,13 @@
         <div class="depth-level" data-depth="8">SPECS</div>
     </div>
     
+    <!-- Compact mobile depth indicator - shows prev/current/next -->
+    <div class="depth-indicator-mobile" id="depthIndicatorMobile">
+        <div class="depth-mobile-item prev" id="depthPrev"></div>
+        <div class="depth-mobile-item current" id="depthCurrent">Overview</div>
+        <div class="depth-mobile-item next" id="depthNext">Company</div>
+    </div>
+    
     <div class="ui-overlay info-panel" id="infoPanel">
         <div class="node-info" id="nodeInfo">
             <div class="node-type" id="nodeType">Knowledge Graph</div>
@@ -830,6 +882,39 @@
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         const actionText = isTouchDevice ? 'Tap' : 'Click';
         const continueText = 'Continue →'; // Keep consistent across all devices
+        
+        // Depth level names for mobile indicator
+        const depthLevelNames = ['Overview', 'Company', 'Segments', 'Divisions', 'Markets', 'Commodities', 'Core Jobs', 'Restrictions', 'Specs'];
+        
+        // Update mobile depth indicator (shows prev/current/next)
+        function updateMobileDepthIndicator(currentDepth) {
+            const prevEl = document.getElementById('depthPrev');
+            const currentEl = document.getElementById('depthCurrent');
+            const nextEl = document.getElementById('depthNext');
+            
+            if (!prevEl || !currentEl || !nextEl) return;
+            
+            // Previous level
+            if (currentDepth > 0) {
+                prevEl.textContent = depthLevelNames[currentDepth - 1];
+                prevEl.style.display = 'block';
+            } else {
+                prevEl.textContent = '';
+                prevEl.style.display = 'none';
+            }
+            
+            // Current level
+            currentEl.textContent = depthLevelNames[currentDepth] || 'Overview';
+            
+            // Next level
+            if (currentDepth < depthLevelNames.length - 1) {
+                nextEl.textContent = depthLevelNames[currentDepth + 1];
+                nextEl.style.display = 'block';
+            } else {
+                nextEl.textContent = '';
+                nextEl.style.display = 'none';
+            }
+        }
         
         // Create sphere texture for particles
         function createSphereTexture() {
@@ -1037,6 +1122,7 @@
                 document.getElementById('nodeInfo').style.display = 'none';
                 document.querySelector('.top-bar').style.display = 'none';
                 document.querySelector('.depth-indicator').style.display = 'none';
+                document.getElementById('depthIndicatorMobile').style.display = 'none';
                 document.getElementById('labels-container').style.opacity = '0';
                 document.querySelector('.progress-bar').style.display = 'none';
                 Object.values(keyNodeMeshes).forEach(mesh => {
@@ -1078,12 +1164,17 @@
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
             
+            // On mobile, make particles smaller and more transparent to avoid cluttering key nodes
+            const isMobileView = window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const particleSize = isMobileView ? 0.15 : 0.45;
+            const particleOpacity = isMobileView ? 0.25 : 0.85;
+            
             const material = new THREE.PointsMaterial({
-                size: 0.45,
+                size: particleSize,
                 map: sphereTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: 0.85,
+                opacity: particleOpacity,
                 sizeAttenuation: true,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
@@ -1280,6 +1371,7 @@
                 document.getElementById('nodeInfo').style.display = 'none';
                 document.querySelector('.top-bar').style.display = 'none';
                 document.querySelector('.depth-indicator').style.display = 'none';
+                document.getElementById('depthIndicatorMobile').style.display = 'none';
                 document.getElementById('labels-container').style.opacity = '0';
                 document.querySelector('.progress-bar').style.display = 'none';
                 document.getElementById('clickPrompt').textContent = 'Click to Start';
@@ -1293,6 +1385,8 @@
                 document.getElementById('nodeInfo').style.display = 'block';
                 document.querySelector('.top-bar').style.display = 'flex';
                 document.querySelector('.depth-indicator').style.display = 'flex';
+                // Mobile depth indicator visibility is handled by CSS media query
+                document.getElementById('depthIndicatorMobile').style.display = '';
                 document.getElementById('labels-container').style.opacity = '1';
                 document.querySelector('.progress-bar').style.display = 'block';
                 startFadeInKeyNodes();
@@ -1301,6 +1395,9 @@
             document.querySelectorAll('.depth-level').forEach((el, i) => {
                 el.classList.toggle('active', i === wp.depthLevel);
             });
+            
+            // Update mobile depth indicator
+            updateMobileDepthIndicator(wp.depthLevel);
             
             if (wp.highlightNodes) {
                 highlightNodes(wp.highlightNodes);
