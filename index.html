@@ -337,6 +337,267 @@
             font-size: 14px;
             margin: 4px;
         }
+        
+        /* Mobile Responsive Styles */
+        @media screen and (max-width: 768px) {
+            .top-bar {
+                padding: 16px 20px;
+            }
+            
+            .logo {
+                font-size: 14px;
+                letter-spacing: 2px;
+            }
+            
+            .logo-subtitle {
+                font-size: 10px;
+                letter-spacing: 1px;
+            }
+            
+            .node-counter .count {
+                font-size: 28px;
+            }
+            
+            .node-counter {
+                font-size: 12px;
+            }
+            
+            .info-panel {
+                bottom: 20px;
+                left: 16px;
+                right: 16px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding-top: 60px;
+            }
+            
+            .node-info {
+                max-width: 100%;
+                padding-right: 0;
+            }
+            
+            .node-type {
+                font-size: 11px;
+                letter-spacing: 2px;
+                margin-bottom: 6px;
+            }
+            
+            .node-name {
+                font-size: 24px;
+                margin-bottom: 8px;
+            }
+            
+            .node-description {
+                font-size: 13px;
+                line-height: 1.5;
+                margin-bottom: 8px;
+            }
+            
+            .click-prompt {
+                font-size: 12px;
+                letter-spacing: 1px;
+                padding: 10px 20px;
+                align-self: flex-start;
+                position: relative !important;
+                bottom: auto !important;
+                right: auto !important;
+            }
+            
+            /* Hide depth indicator on tablets and mobile */
+            .depth-indicator {
+                display: none !important;
+            }
+            
+            .floating-label {
+                font-size: 10px;
+            }
+            
+            .floating-label.highlight {
+                font-size: 12px;
+            }
+            
+            .floating-label.major {
+                font-size: 16px;
+            }
+            
+            .vignette {
+                box-shadow: inset 0 0 150px rgba(10, 14, 20, 0.95);
+            }
+            
+            .loading-text {
+                font-size: 12px;
+                letter-spacing: 3px;
+            }
+            
+            .loading-bar {
+                width: 150px;
+            }
+        }
+        
+        /* Small mobile devices */
+        @media screen and (max-width: 480px) {
+            .top-bar {
+                padding: 12px 16px;
+            }
+            
+            .logo {
+                font-size: 12px;
+            }
+            
+            .logo-subtitle {
+                font-size: 9px;
+            }
+            
+            .info-panel {
+                bottom: 16px;
+                left: 12px;
+                right: 12px;
+                padding-top: 40px;
+            }
+            
+            .node-name {
+                font-size: 22px;
+                margin-bottom: 8px;
+            }
+            
+            .node-description {
+                font-size: 13px;
+                line-height: 1.5;
+            }
+            
+            .click-prompt {
+                font-size: 11px;
+                padding: 8px 16px;
+            }
+            
+            /* Hide depth indicator on very small screens */
+            .depth-indicator {
+                display: none;
+            }
+            
+            .floating-label {
+                font-size: 9px;
+            }
+            
+            .floating-label.highlight {
+                font-size: 10px;
+            }
+            
+            .floating-label.major {
+                font-size: 14px;
+            }
+        }
+        
+        /* Extra small devices (iPhone SE, etc) */
+        @media screen and (max-width: 375px) {
+            .node-name {
+                font-size: 20px;
+            }
+            
+            .node-description {
+                font-size: 12px;
+            }
+            
+            .click-prompt {
+                font-size: 10px;
+                padding: 6px 12px;
+            }
+            
+            .info-panel {
+                bottom: 12px;
+                left: 8px;
+                right: 8px;
+            }
+        }
+        
+        /* Touch-friendly interactions */
+        @media (hover: none) and (pointer: coarse) {
+            .click-prompt {
+                padding: 14px 24px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .depth-level {
+                padding: 6px 10px;
+                min-height: 32px;
+            }
+        }
+        
+        /* Landscape mobile */
+        @media screen and (max-width: 896px) and (max-height: 450px) and (orientation: landscape) {
+            .info-panel {
+                bottom: 8px;
+                left: 16px;
+                right: 16px;
+                flex-direction: row;
+                align-items: flex-end;
+                justify-content: space-between;
+                padding-top: 30px;
+                gap: 16px;
+            }
+            
+            .node-info {
+                max-width: 65%;
+            }
+            
+            .node-type {
+                font-size: 10px;
+                margin-bottom: 4px;
+            }
+            
+            .node-name {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
+            
+            .node-description {
+                font-size: 11px;
+                line-height: 1.4;
+                margin-bottom: 0;
+            }
+            
+            .click-prompt {
+                position: relative !important;
+                bottom: auto !important;
+                right: auto !important;
+                font-size: 11px;
+                padding: 8px 16px;
+                white-space: nowrap;
+            }
+            
+            /* Hide depth indicator in landscape mobile */
+            .depth-indicator {
+                display: none !important;
+            }
+            
+            .top-bar {
+                padding: 8px 16px;
+            }
+            
+            .logo {
+                font-size: 12px;
+            }
+            
+            .logo-subtitle {
+                font-size: 9px;
+            }
+            
+            .floating-label {
+                font-size: 9px;
+            }
+            
+            .floating-label.highlight {
+                font-size: 11px;
+            }
+            
+            .floating-label.major {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -565,6 +826,11 @@
         let isAnimating = false;
         let sphereTexture;
         
+        // Touch device detection for mobile-aware UI
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const actionText = isTouchDevice ? 'Tap' : 'Click';
+        const continueText = 'Continue →'; // Keep consistent across all devices
+        
         // Create sphere texture for particles
         function createSphereTexture() {
             const canvas = document.createElement('canvas');
@@ -602,15 +868,20 @@
             jobmap: 0xd2a8ff        // Light purple
         };
         
+        // Detect mobile for particle count optimization
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+            || window.innerWidth < 768;
+        const particleMultiplier = isMobileDevice ? 0.4 : 1; // Reduce particles on mobile
+        
         // Clusters for particle background
         const clusters = [
-            { name: "Commodities", type: "commodity", count: 3000, center: { x: 0, y: 0, z: 0 }, radius: 50 },
-            { name: "Products", type: "product", count: 400, center: { x: -25, y: 12, z: -15 }, radius: 15 },
-            { name: "Companies", type: "company", count: 80, center: { x: -35, y: -8, z: 5 }, radius: 10 },
-            { name: "Markets", type: "market", count: 150, center: { x: 15, y: 20, z: -10 }, radius: 12 },
-            { name: "Restrictions", type: "restriction", count: 60, center: { x: 30, y: 18, z: 5 }, radius: 8 },
-            { name: "CoreJobs", type: "corejob", count: 100, center: { x: -18, y: 22, z: 8 }, radius: 10 },
-            { name: "Specs", type: "spec", count: 200, center: { x: 35, y: 10, z: 15 }, radius: 12 }
+            { name: "Commodities", type: "commodity", count: Math.floor(3000 * particleMultiplier), center: { x: 0, y: 0, z: 0 }, radius: 50 },
+            { name: "Products", type: "product", count: Math.floor(400 * particleMultiplier), center: { x: -25, y: 12, z: -15 }, radius: 15 },
+            { name: "Companies", type: "company", count: Math.floor(80 * particleMultiplier), center: { x: -35, y: -8, z: 5 }, radius: 10 },
+            { name: "Markets", type: "market", count: Math.floor(150 * particleMultiplier), center: { x: 15, y: 20, z: -10 }, radius: 12 },
+            { name: "Restrictions", type: "restriction", count: Math.floor(60 * particleMultiplier), center: { x: 30, y: 18, z: 5 }, radius: 8 },
+            { name: "CoreJobs", type: "corejob", count: Math.floor(100 * particleMultiplier), center: { x: -18, y: 22, z: 8 }, radius: 10 },
+            { name: "Specs", type: "spec", count: Math.floor(200 * particleMultiplier), center: { x: 35, y: 10, z: 15 }, radius: 12 }
         ];
         
         // Key nodes for the SHS story
@@ -646,12 +917,23 @@
             scene.background = new THREE.Color(0x0a0e14);
             scene.fog = new THREE.FogExp2(0x0a0e14, 0.005);
             
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+            // Detect mobile for performance optimization
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                || window.innerWidth < 768;
+            
+            // Adjust FOV for portrait mobile to show more of the scene
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const baseFOV = (isPortrait && isMobile) ? 75 : 60; // Wider FOV for portrait mobile
+            
+            camera = new THREE.PerspectiveCamera(baseFOV, window.innerWidth / window.innerHeight, 0.1, 500);
             camera.position.set(0, 0, 120);
             
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: !isMobile, // Disable antialiasing on mobile for performance
+                powerPreference: isMobile ? 'low-power' : 'high-performance'
+            });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
             container.appendChild(renderer.domElement);
             
             sphereTexture = createSphereTexture();
@@ -686,6 +968,43 @@
                 }
             });
             
+            // Touch support for mobile with swipe detection
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            
+            document.body.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            document.body.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipe();
+            }, { passive: true });
+            
+            function handleSwipe() {
+                if (isAnimating) return;
+                
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
+                const threshold = 50; // Minimum swipe distance
+                
+                // If it's a swipe left or tap, go to next waypoint
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
+                    if (diffX < 0) {
+                        // Swipe left - go forward
+                        flyToNextWaypoint();
+                    }
+                    // Swipe right could go back (optional future feature)
+                } else if (Math.abs(diffX) < 20 && Math.abs(diffY) < 20) {
+                    // Tap detected (small movement)
+                    flyToNextWaypoint();
+                }
+            }
+            
             document.body.addEventListener('keydown', (e) => {
                 if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
                     e.preventDefault();
@@ -698,7 +1017,17 @@
             document.body.tabIndex = 0;
             document.body.focus();
             
-            window.addEventListener('resize', onWindowResize);
+            // Debounced resize handler for better mobile performance
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(onWindowResize, 100);
+            });
+            
+            // Handle orientation change on mobile
+            window.addEventListener('orientationchange', function() {
+                setTimeout(onWindowResize, 200);
+            });
             
             animate();
             
@@ -716,10 +1045,10 @@
                 connectionLines.forEach(line => {
                     line.visible = false;
                 });
-                document.getElementById('clickPrompt').textContent = 'Click to Start';
+                document.getElementById('clickPrompt').textContent = actionText + ' to Start';
                 document.getElementById('clickPrompt').style.position = 'fixed';
-                document.getElementById('clickPrompt').style.bottom = '40px';
-                document.getElementById('clickPrompt').style.right = '40px';
+                document.getElementById('clickPrompt').style.bottom = isTouchDevice ? '30px' : '40px';
+                document.getElementById('clickPrompt').style.right = isTouchDevice ? '20px' : '40px';
             }, 2500);
         }
         
@@ -926,6 +1255,14 @@
             });
         }
         
+        // Calculate camera position offset for portrait mobile
+        function getPortraitCameraOffset() {
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const isMobileView = window.innerWidth < 768;
+            // Move camera back 40% more in portrait mobile to show more of the scene
+            return (isPortrait && isMobileView) ? 1.4 : 1.0;
+        }
+        
         function flyToNextWaypoint() {
             if (isAnimating) return;
             
@@ -935,6 +1272,7 @@
             }
             
             const wp = waypoints[currentWaypoint];
+            const zoomMultiplier = getPortraitCameraOffset();
             
             document.getElementById('nodeInfo').classList.remove('info-visible');
             
@@ -974,7 +1312,9 @@
             camera.getWorldDirection(startTarget);
             startTarget.multiplyScalar(10).add(camera.position);
             
-            const endPos = new THREE.Vector3(wp.position.x, wp.position.y, wp.position.z);
+            // Apply zoom multiplier for portrait mobile (move camera back to show more)
+            const adjustedZ = wp.position.z * zoomMultiplier;
+            const endPos = new THREE.Vector3(wp.position.x, wp.position.y, adjustedZ);
             const endTarget = new THREE.Vector3(wp.target.x, wp.target.y, wp.target.z);
             
             const duration = 2500;
@@ -1085,6 +1425,12 @@
         
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
+            
+            // Adjust FOV based on orientation
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const isMobileView = window.innerWidth < 768;
+            camera.fov = (isPortrait && isMobileView) ? 75 : 60;
+            
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
