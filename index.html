@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Flythrough - Siemens Healthineers Digital Twin</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Outfit:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #111820;
+            --accent-teal: #00a6a0;
+            --accent-teal-dim: rgba(0, 166, 160, 0.6);
+            --accent-petrol: #006269;
+            --text-primary: #f3f1eb;
+            --text-secondary: #b9b9b9;
+            --text-muted: #858585;
+            --badge-bg: #1a2530;
+            --border-color: rgba(0, 166, 160, 0.2);
+            --success: #4ecdc4;
+            --warning: #ff6b9d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        canvas { display: block; }
+        
+        .ui-overlay {
+            position: fixed;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .top-bar {
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: linear-gradient(to bottom, rgba(10, 14, 20, 0.95) 0%, transparent 100%);
+        }
+        
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            letter-spacing: 3px;
+            color: var(--accent-teal);
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+        
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+        
+        .node-counter {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+        
+        .node-counter .count {
+            font-size: 42px;
+            font-weight: 600;
+            color: var(--accent-teal);
+            display: block;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--badge-bg);
+            z-index: 100;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-petrol), var(--accent-teal));
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .info-panel {
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            background: linear-gradient(to top, rgba(10, 14, 20, 0.98) 0%, transparent 100%);
+            padding-top: 80px;
+        }
+        
+        .node-info { max-width: 700px; }
+        
+        .node-type {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 3px;
+            color: var(--accent-teal);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .node-name {
+            font-size: 56px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 16px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;
+            line-height: 1.1;
+        }
+        
+        .node-description {
+            font-size: 20px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+        }
+        
+        .node-description .highlight {
+            color: var(--accent-teal);
+            font-weight: 600;
+        }
+        
+        .node-description .warning {
+            color: var(--warning);
+            font-weight: 600;
+        }
+        
+        .info-visible .node-type,
+        .info-visible .node-name,
+        .info-visible .node-description {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .click-prompt {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: var(--accent-teal);
+            pointer-events: auto;
+            cursor: pointer;
+            padding: 14px 28px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        .click-prompt.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .click-prompt:hover {
+            background: var(--badge-bg);
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 20px rgba(0, 166, 160, 0.3);
+        }
+        
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 55;
+            box-shadow: inset 0 0 300px rgba(10, 14, 20, 0.95);
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 1s ease;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: var(--accent-teal);
+            text-transform: uppercase;
+        }
+        
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: var(--badge-bg);
+            margin-top: 24px;
+            overflow: hidden;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-petrol), var(--accent-teal));
+            animation: loading 2s ease-in-out;
+        }
+        
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        
+        #labels-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 80;
+            transition: opacity 0.8s ease;
+        }
+        
+        .floating-label {
+            position: absolute;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+            white-space: nowrap;
+            pointer-events: none;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .floating-label.highlight {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--accent-teal);
+        }
+        
+        .floating-label.major {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 0 30px var(--accent-teal), 0 0 60px var(--accent-teal);
+            animation: labelPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes labelPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+        
+        .depth-indicator {
+            position: fixed;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 100;
+        }
+        
+        .depth-level {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: right;
+            padding: 4px 12px;
+            border-right: 2px solid var(--badge-bg);
+            transition: all 0.3s ease;
+        }
+        
+        .depth-level.active {
+            color: var(--accent-teal);
+            border-right-color: var(--accent-teal);
+        }
+        
+        /* Restriction badges */
+        .restriction-badge {
+            display: inline-block;
+            background: rgba(255, 107, 157, 0.15);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-text">Loading Digital Twin</div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+    
+    <div id="canvas-container"></div>
+    <div id="labels-container"></div>
+    <div class="vignette"></div>
+    
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    
+    <div class="ui-overlay top-bar">
+        <div>
+            <div class="logo">Digital Twin</div>
+            <div class="logo-subtitle">Siemens Healthineers</div>
+        </div>
+    </div>
+    
+    <div class="depth-indicator" id="depthIndicator">
+        <div class="depth-level active" data-depth="0">OVERVIEW</div>
+        <div class="depth-level" data-depth="1">COMPANY</div>
+        <div class="depth-level" data-depth="2">SEGMENTS</div>
+        <div class="depth-level" data-depth="3">DIVISIONS</div>
+        <div class="depth-level" data-depth="4">MARKETS</div>
+        <div class="depth-level" data-depth="5">COMMODITIES</div>
+        <div class="depth-level" data-depth="6">CORE JOBS</div>
+        <div class="depth-level" data-depth="7">RESTRICTIONS</div>
+        <div class="depth-level" data-depth="8">SPECS</div>
+    </div>
+    
+    <div class="ui-overlay info-panel" id="infoPanel">
+        <div class="node-info" id="nodeInfo">
+            <div class="node-type" id="nodeType">Knowledge Graph</div>
+            <div class="node-name" id="nodeName">Complete Digital Twin</div>
+            <div class="node-description" id="nodeDescription">
+                Exploring the diagnostic imaging ecosystem
+            </div>
+        </div>
+        <div class="click-prompt visible" id="clickPrompt">Click to Start →</div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Siemens Healthineers specific waypoints following Lukas's story
+        const waypoints = [
+            // 0: Mystery start - particles only
+            {
+                position: { x: 0, y: 0, z: 100 },
+                target: { x: 0, y: 0, z: 0 },
+                type: "",
+                name: "",
+                description: "",
+                nodeCount: "",
+                highlightNodes: [],
+                hideOverlay: true,
+                depthLevel: 0
+            },
+            // 1: SHS Overview
+            {
+                position: { x: -10, y: 5, z: 35 },
+                target: { x: 0, y: 0, z: 0 },
+                type: "Company",
+                name: "Siemens Healthineers",
+                description: "German leader in diagnostic imaging. <span class='highlight'>High market shares</span>, but diminishing returns from R&D; <span class='warning'>increased competition from China</span> (United Imaging)",
+                nodeCount: "1",
+                highlightNodes: ["shs"],
+                depthLevel: 1
+            },
+            // 2: All Org1 Levels
+            {
+                position: { x: 0, y: 8, z: 25 },
+                target: { x: 0, y: 5, z: 0 },
+                type: "Business Segments",
+                name: "Organization Structure",
+                description: "Strategic business segments: Imaging, Diagnostics, Varian, Advanced Therapies",
+                nodeCount: "4",
+                highlightNodes: ["imaging_bu", "diagnostics_bu", "varian_bu", "therapies_bu"],
+                depthLevel: 2
+            },
+            // 3: Diagnostic Imaging (DI)
+            {
+                position: { x: -8, y: 6, z: 18 },
+                target: { x: -8, y: 5, z: 0 },
+                type: "Segment",
+                name: "Diagnostic Imaging",
+                description: "Core imaging business: CT, MR, X-ray, Molecular Imaging. Revenue backbone of Siemens Healthineers.",
+                nodeCount: "5",
+                highlightNodes: ["di_segment", "ct_div", "mr_div", "xray_div", "mi_div"],
+                depthLevel: 2
+            },
+            // 4: MR Division
+            {
+                position: { x: -12, y: 10, z: 14 },
+                target: { x: -12, y: 8, z: -5 },
+                type: "Division",
+                name: "Magnetic Resonance",
+                description: "<span class='highlight'>Revenue driver</span> of Siemens Healthineers. A number of markets <span class='warning'>increasingly commoditized</span>.",
+                nodeCount: "12",
+                highlightNodes: ["mr_div", "mr_products"],
+                depthLevel: 3
+            },
+            // 5: Breast Imaging Market
+            {
+                position: { x: 8, y: 15, z: 12 },
+                target: { x: 8, y: 14, z: -8 },
+                type: "Market",
+                name: "Breast Imaging",
+                description: "Imaging market with <span class='highlight'>vast growth potential</span>. MR has high clinical performance, but comes with a number of <span class='warning'>technology restrictions</span>.",
+                nodeCount: "1",
+                highlightNodes: ["breast_market"],
+                depthLevel: 4
+            },
+            // 6: Connected Commodities
+            {
+                position: { x: 15, y: 12, z: 15 },
+                target: { x: 15, y: 10, z: -5 },
+                type: "Commodities",
+                name: "Imaging Modalities",
+                description: "Multiple methodologies serve the Core Functional Job: <span class='highlight'>MR, Mammography, Ultrasound</span>. Each comes with specific restrictions.",
+                nodeCount: "3",
+                highlightNodes: ["mr_commodity", "mammo_commodity", "us_commodity"],
+                depthLevel: 5
+            },
+            // 7: Core Jobs Cloud
+            {
+                position: { x: -15, y: 20, z: 18 },
+                target: { x: -15, y: 18, z: 0 },
+                type: "Core Functional Job",
+                name: "Detect Breast Cancer Early",
+                description: "Core Functional Job is satisfied by different methodologies. Each comes with specific trade-offs between sensitivity, specificity, and patient acceptance.",
+                nodeCount: "8",
+                highlightNodes: ["cfj_detect", "core_jobs"],
+                depthLevel: 6
+            },
+            // 8: Job Map Cloud
+            {
+                position: { x: -20, y: 25, z: 12 },
+                target: { x: -20, y: 23, z: -5 },
+                type: "Job Map",
+                name: "Screening Workflow",
+                description: "From patient preparation → image acquisition → interpretation → diagnosis → follow-up. Each step has unique challenges.",
+                nodeCount: "12",
+                highlightNodes: ["job_map"],
+                depthLevel: 6
+            },
+            // 9: Restrictions Cloud Overview
+            {
+                position: { x: 25, y: 20, z: 15 },
+                target: { x: 25, y: 18, z: 0 },
+                type: "Technology Restrictions",
+                name: "MR Limitations",
+                description: "MR technology comes with fundamental restrictions that impact <span class='warning'>cost, patient acceptance, and clinical workflow</span>.",
+                nodeCount: "3",
+                highlightNodes: ["helium_restriction", "claustro_restriction", "contrast_restriction"],
+                depthLevel: 7
+            },
+            // 10: Restriction 1 - Helium
+            {
+                position: { x: 30, y: 22, z: 10 },
+                target: { x: 30, y: 20, z: -2 },
+                type: "Restriction",
+                name: "Helium Requirement",
+                description: "<span class='warning'>Need for helium increases cost</span>. Superconducting magnets require cryogenic cooling, creating supply chain dependencies and operational expenses.",
+                nodeCount: "1",
+                highlightNodes: ["helium_restriction"],
+                depthLevel: 7
+            },
+            // 11: Restriction 2 - Closed Magnet
+            {
+                position: { x: 28, y: 18, z: 8 },
+                target: { x: 28, y: 16, z: -4 },
+                type: "Restriction",
+                name: "Closed Magnet Design",
+                description: "<span class='warning'>Closed magnet leads to claustrophobia</span>, reducing patient acceptance for screening programs. Up to 15% of patients cannot complete MR scans.",
+                nodeCount: "1",
+                highlightNodes: ["claustro_restriction"],
+                depthLevel: 7
+            },
+            // 12: Restriction 3 - Contrast Agent
+            {
+                position: { x: 32, y: 15, z: 6 },
+                target: { x: 32, y: 13, z: -5 },
+                type: "Restriction",
+                name: "Contrast Agent Required",
+                description: "<span class='warning'>Need to prescribe drug (contrast agent) to healthy screening participants</span> reduces patient acceptance and adds regulatory complexity.",
+                nodeCount: "1",
+                highlightNodes: ["contrast_restriction"],
+                depthLevel: 7
+            },
+            // 13: Helium Sealed Spec
+            {
+                position: { x: 35, y: 25, z: 12 },
+                target: { x: 35, y: 23, z: 0 },
+                type: "Specification",
+                name: "Helium-Free / Sealed Magnet",
+                description: "Innovation direction: <span class='highlight'>Helium-sealed or helium-free magnet technology</span> reduces operational costs and supply chain risk.",
+                nodeCount: "1",
+                highlightNodes: ["helium_sealed_spec"],
+                depthLevel: 8
+            },
+            // 14: Final Summary - Interconnected
+            {
+                position: { x: 0, y: 30, z: 35 },
+                target: { x: 0, y: 25, z: 0 },
+                type: "Strategic Insight",
+                name: "The Winning Balance",
+                description: "Jobs, Needs, and Restrictions are <span class='highlight'>interconnected</span>. The product striking the <span class='highlight'>right balance</span> wins the race.",
+                nodeCount: "∞",
+                highlightNodes: ["all"],
+                depthLevel: 8
+            }
+        ];
+        
+        // Three.js variables
+        let scene, camera, renderer;
+        let allNodes = [];
+        let labelElements = [];
+        let currentWaypoint = 0;
+        let isAnimating = false;
+        let sphereTexture;
+        
+        // Create sphere texture for particles
+        function createSphereTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.4)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(32, 32, 32, 0, Math.PI * 2);
+            ctx.fill();
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+        
+        // Node colors - Siemens Healthineers themed (teal/petrol)
+        const nodeColors = {
+            company: 0x00a6a0,      // Teal - SHS brand
+            bu: 0x4ecdc4,           // Light teal
+            product: 0x58a6ff,      // Blue
+            market: 0xff6b9d,       // Pink
+            commodity: 0xffa657,    // Orange
+            spec: 0xa9d56f,         // Green
+            cpc: 0x7ee787,          // Light green
+            restriction: 0xff6b6b, // Red for restrictions
+            corejob: 0xb794f6,      // Purple
+            jobmap: 0xd2a8ff        // Light purple
+        };
+        
+        // Clusters for particle background
+        const clusters = [
+            { name: "Commodities", type: "commodity", count: 3000, center: { x: 0, y: 0, z: 0 }, radius: 50 },
+            { name: "Products", type: "product", count: 400, center: { x: -25, y: 12, z: -15 }, radius: 15 },
+            { name: "Companies", type: "company", count: 80, center: { x: -35, y: -8, z: 5 }, radius: 10 },
+            { name: "Markets", type: "market", count: 150, center: { x: 15, y: 20, z: -10 }, radius: 12 },
+            { name: "Restrictions", type: "restriction", count: 60, center: { x: 30, y: 18, z: 5 }, radius: 8 },
+            { name: "CoreJobs", type: "corejob", count: 100, center: { x: -18, y: 22, z: 8 }, radius: 10 },
+            { name: "Specs", type: "spec", count: 200, center: { x: 35, y: 10, z: 15 }, radius: 12 }
+        ];
+        
+        // Key nodes for the SHS story
+        const keyNodes = {
+            shs: { x: 0, y: 0, z: 0, size: 2.5, type: "company", label: "Siemens Healthineers", stage: 1 },
+            imaging_bu: { x: -8, y: 5, z: 2, size: 1.2, type: "bu", label: "Imaging", stage: 2 },
+            diagnostics_bu: { x: 8, y: 5, z: 2, size: 1.0, type: "bu", label: "Diagnostics", stage: 2 },
+            varian_bu: { x: -8, y: -5, z: 2, size: 1.0, type: "bu", label: "Varian", stage: 2 },
+            therapies_bu: { x: 8, y: -5, z: 2, size: 0.9, type: "bu", label: "Advanced Therapies", stage: 2 },
+            di_segment: { x: -10, y: 6, z: -3, size: 1.4, type: "bu", label: "Diagnostic Imaging", stage: 3 },
+            mr_div: { x: -14, y: 9, z: -6, size: 1.6, type: "product", label: "Magnetic Resonance", stage: 4 },
+            ct_div: { x: -6, y: 9, z: -6, size: 1.0, type: "product", label: "CT", stage: 3 },
+            xray_div: { x: -10, y: 3, z: -6, size: 0.9, type: "product", label: "X-ray", stage: 3 },
+            breast_market: { x: 8, y: 14, z: -8, size: 1.8, type: "market", label: "Breast Imaging", stage: 5 },
+            mr_commodity: { x: 12, y: 10, z: -4, size: 1.3, type: "commodity", label: "MRI Scanner", stage: 6 },
+            mammo_commodity: { x: 18, y: 10, z: -6, size: 1.2, type: "commodity", label: "Mammography", stage: 6 },
+            us_commodity: { x: 15, y: 8, z: -2, size: 1.1, type: "commodity", label: "Ultrasound", stage: 6 },
+            cfj_detect: { x: -15, y: 18, z: 0, size: 1.5, type: "corejob", label: "Detect Breast Cancer Early", stage: 7 },
+            job_map: { x: -20, y: 23, z: -5, size: 1.2, type: "jobmap", label: "Screening Workflow", stage: 8 },
+            helium_restriction: { x: 30, y: 20, z: -2, size: 1.6, type: "restriction", label: "Helium Requirement", stage: 10 },
+            claustro_restriction: { x: 28, y: 16, z: -4, size: 1.4, type: "restriction", label: "Claustrophobia", stage: 11 },
+            contrast_restriction: { x: 32, y: 13, z: -5, size: 1.4, type: "restriction", label: "Contrast Agent", stage: 12 },
+            helium_sealed_spec: { x: 35, y: 23, z: 0, size: 1.7, type: "spec", label: "Helium-Free Magnet", stage: 13 }
+        };
+        
+        let keyNodeMeshes = {};
+        let connectionLines = [];
+        
+        function init() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0e14);
+            scene.fog = new THREE.FogExp2(0x0a0e14, 0.005);
+            
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+            camera.position.set(0, 0, 120);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+            
+            sphereTexture = createSphereTexture();
+            
+            // Lighting - teal accent
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.12);
+            scene.add(ambientLight);
+            
+            const pointLight1 = new THREE.PointLight(0x00a6a0, 1.5, 200);
+            pointLight1.position.set(40, 40, 40);
+            scene.add(pointLight1);
+            
+            const pointLight2 = new THREE.PointLight(0x006269, 1, 200);
+            pointLight2.position.set(-40, -40, 40);
+            scene.add(pointLight2);
+            
+            // Create clusters
+            clusters.forEach(cluster => createCluster(cluster));
+            
+            // Create key nodes
+            Object.entries(keyNodes).forEach(([id, data]) => {
+                createKeyNode(id, data);
+            });
+            
+            // Create connections
+            createConnections();
+            
+            // Event listeners
+            document.body.addEventListener('click', function(e) {
+                if (!isAnimating) {
+                    flyToNextWaypoint();
+                }
+            });
+            
+            document.body.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    if (!isAnimating) {
+                        flyToNextWaypoint();
+                    }
+                }
+            });
+            
+            document.body.tabIndex = 0;
+            document.body.focus();
+            
+            window.addEventListener('resize', onWindowResize);
+            
+            animate();
+            
+            // Hide loading
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('nodeInfo').style.display = 'none';
+                document.querySelector('.top-bar').style.display = 'none';
+                document.querySelector('.depth-indicator').style.display = 'none';
+                document.getElementById('labels-container').style.opacity = '0';
+                document.querySelector('.progress-bar').style.display = 'none';
+                Object.values(keyNodeMeshes).forEach(mesh => {
+                    mesh.visible = false;
+                });
+                connectionLines.forEach(line => {
+                    line.visible = false;
+                });
+                document.getElementById('clickPrompt').textContent = 'Click to Start';
+                document.getElementById('clickPrompt').style.position = 'fixed';
+                document.getElementById('clickPrompt').style.bottom = '40px';
+                document.getElementById('clickPrompt').style.right = '40px';
+            }, 2500);
+        }
+        
+        function createCluster(cluster) {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(cluster.count * 3);
+            const colors = new Float32Array(cluster.count * 3);
+            
+            const baseColor = new THREE.Color(nodeColors[cluster.type] || nodeColors.commodity);
+            
+            for (let i = 0; i < cluster.count; i++) {
+                const phi = Math.random() * Math.PI * 2;
+                const cosTheta = 2 * Math.random() - 1;
+                const theta = Math.acos(cosTheta);
+                const r = cluster.radius * Math.pow(Math.random(), 0.4);
+                
+                positions[i * 3] = cluster.center.x + r * Math.sin(theta) * Math.cos(phi);
+                positions[i * 3 + 1] = cluster.center.y + r * Math.sin(theta) * Math.sin(phi);
+                positions[i * 3 + 2] = cluster.center.z + r * Math.cos(theta);
+                
+                const v = 0.6 + Math.random() * 0.5;
+                colors[i * 3] = baseColor.r * v;
+                colors[i * 3 + 1] = baseColor.g * v;
+                colors[i * 3 + 2] = baseColor.b * v;
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.45,
+                map: sphereTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85,
+                sizeAttenuation: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            
+            const points = new THREE.Points(geometry, material);
+            points.userData = { cluster: cluster.name, originalPositions: positions.slice() };
+            scene.add(points);
+            allNodes.push(points);
+        }
+        
+        function createKeyNode(id, data) {
+            const color = new THREE.Color(nodeColors[data.type] || nodeColors.company);
+            const lighterColor = color.clone();
+            lighterColor.lerp(new THREE.Color(0xffffff), 0.3);
+            
+            const spriteMaterial = new THREE.SpriteMaterial({
+                map: sphereTexture,
+                color: lighterColor,
+                transparent: true,
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(data.size * 2.5, data.size * 2.5, 1);
+            sprite.position.set(data.x, data.y, data.z);
+            
+            sprite.userData = { 
+                id, 
+                ...data, 
+                sprite,
+                baseScale: data.size * 2.5,
+                highlighted: false
+            };
+            
+            scene.add(sprite);
+            allNodes.push(sprite);
+            keyNodeMeshes[id] = sprite;
+            
+            createFloatingLabel(data.label, data.x, data.y + data.size * 1.5, data.z, true, id);
+        }
+        
+        function createFloatingLabel(text, x, y, z, isHighlight, nodeId = null) {
+            const div = document.createElement('div');
+            div.className = `floating-label ${isHighlight ? 'highlight' : ''}`;
+            div.textContent = text;
+            if (nodeId) div.dataset.nodeId = nodeId;
+            document.getElementById('labels-container').appendChild(div);
+            
+            labelElements.push({
+                element: div,
+                position: new THREE.Vector3(x, y, z),
+                isHighlight,
+                nodeId
+            });
+        }
+        
+        let fadeInStartTime = null;
+        let isFadingIn = false;
+        
+        function startFadeInKeyNodes() {
+            fadeInStartTime = Date.now();
+            isFadingIn = true;
+            Object.values(keyNodeMeshes).forEach(sprite => {
+                sprite.visible = true;
+                sprite.scale.set(0.01, 0.01, 1);
+                if (sprite.material) sprite.material.opacity = 0;
+            });
+            connectionLines.forEach(line => {
+                line.visible = true;
+                line.material.opacity = 0;
+            });
+        }
+        
+        function updateFadeIn() {
+            if (!isFadingIn || !fadeInStartTime) return;
+            
+            const duration = 2500;
+            const elapsed = Date.now() - fadeInStartTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            
+            Object.values(keyNodeMeshes).forEach(sprite => {
+                const baseScale = sprite.userData.baseScale || 1;
+                const scale = baseScale * eased;
+                sprite.scale.set(scale, scale, 1);
+                if (sprite.material) {
+                    sprite.material.opacity = eased * 0.9;
+                }
+            });
+            
+            connectionLines.forEach(line => {
+                if (line.material) {
+                    line.material.opacity = eased * 0.4;
+                }
+            });
+            
+            if (progress >= 1) {
+                isFadingIn = false;
+            }
+        }
+        
+        function highlightNodes(nodeIds) {
+            Object.values(keyNodeMeshes).forEach(mesh => {
+                if (mesh.userData) {
+                    mesh.userData.highlighted = false;
+                }
+            });
+            
+            nodeIds.forEach(id => {
+                const mesh = keyNodeMeshes[id];
+                if (mesh && mesh.userData) {
+                    mesh.userData.highlighted = true;
+                }
+            });
+            
+            labelElements.forEach(label => {
+                if (label.nodeId) {
+                    const isActive = nodeIds.includes(label.nodeId);
+                    label.element.classList.toggle('major', isActive);
+                }
+            });
+        }
+        
+        function createConnections() {
+            const connections = [
+                ['shs', 'imaging_bu'],
+                ['shs', 'diagnostics_bu'],
+                ['shs', 'varian_bu'],
+                ['shs', 'therapies_bu'],
+                ['imaging_bu', 'di_segment'],
+                ['di_segment', 'mr_div'],
+                ['di_segment', 'ct_div'],
+                ['di_segment', 'xray_div'],
+                ['mr_div', 'breast_market'],
+                ['breast_market', 'mr_commodity'],
+                ['breast_market', 'mammo_commodity'],
+                ['breast_market', 'us_commodity'],
+                ['breast_market', 'cfj_detect'],
+                ['cfj_detect', 'job_map'],
+                ['mr_commodity', 'helium_restriction'],
+                ['mr_commodity', 'claustro_restriction'],
+                ['mr_commodity', 'contrast_restriction'],
+                ['helium_restriction', 'helium_sealed_spec']
+            ];
+            
+            connections.forEach(([fromId, toId]) => {
+                const from = keyNodes[fromId];
+                const to = keyNodes[toId];
+                if (!from || !to) return;
+                
+                const start = new THREE.Vector3(from.x, from.y, from.z);
+                const end = new THREE.Vector3(to.x, to.y, to.z);
+                
+                const points = [start, end];
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x00a6a0,
+                    transparent: true,
+                    opacity: 0.4,
+                    linewidth: 2
+                });
+                
+                const line = new THREE.Line(geometry, material);
+                scene.add(line);
+                connectionLines.push(line);
+            });
+        }
+        
+        function flyToNextWaypoint() {
+            if (isAnimating) return;
+            
+            currentWaypoint++;
+            if (currentWaypoint >= waypoints.length) {
+                currentWaypoint = 0;
+            }
+            
+            const wp = waypoints[currentWaypoint];
+            
+            document.getElementById('nodeInfo').classList.remove('info-visible');
+            
+            if (wp.hideOverlay) {
+                document.getElementById('nodeInfo').style.display = 'none';
+                document.querySelector('.top-bar').style.display = 'none';
+                document.querySelector('.depth-indicator').style.display = 'none';
+                document.getElementById('labels-container').style.opacity = '0';
+                document.querySelector('.progress-bar').style.display = 'none';
+                document.getElementById('clickPrompt').textContent = 'Click to Start';
+                Object.values(keyNodeMeshes).forEach(mesh => {
+                    mesh.visible = false;
+                });
+                connectionLines.forEach(line => {
+                    line.visible = false;
+                });
+            } else {
+                document.getElementById('nodeInfo').style.display = 'block';
+                document.querySelector('.top-bar').style.display = 'flex';
+                document.querySelector('.depth-indicator').style.display = 'flex';
+                document.getElementById('labels-container').style.opacity = '1';
+                document.querySelector('.progress-bar').style.display = 'block';
+                startFadeInKeyNodes();
+            }
+            
+            document.querySelectorAll('.depth-level').forEach((el, i) => {
+                el.classList.toggle('active', i === wp.depthLevel);
+            });
+            
+            if (wp.highlightNodes) {
+                highlightNodes(wp.highlightNodes);
+            }
+            
+            isAnimating = true;
+            const startPos = camera.position.clone();
+            const startTarget = new THREE.Vector3();
+            camera.getWorldDirection(startTarget);
+            startTarget.multiplyScalar(10).add(camera.position);
+            
+            const endPos = new THREE.Vector3(wp.position.x, wp.position.y, wp.position.z);
+            const endTarget = new THREE.Vector3(wp.target.x, wp.target.y, wp.target.z);
+            
+            const duration = 2500;
+            const startTime = Date.now();
+            
+            function updateCamera() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeInOutQuart(progress);
+                
+                document.getElementById('progressFill').style.width = 
+                    ((currentWaypoint + progress) / waypoints.length * 100) + '%';
+                
+                camera.position.lerpVectors(startPos, endPos, eased);
+                
+                const currentTarget = new THREE.Vector3().lerpVectors(startTarget, endTarget, eased);
+                camera.lookAt(currentTarget);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateCamera);
+                } else {
+                    if (!wp.hideOverlay) {
+                        document.getElementById('nodeType').textContent = wp.type;
+                        document.getElementById('nodeName').textContent = wp.name;
+                        document.getElementById('nodeDescription').innerHTML = wp.description;
+                        document.getElementById('nodeInfo').classList.add('info-visible');
+                    }
+                    
+                    if (currentWaypoint === waypoints.length - 1) {
+                        document.getElementById('clickPrompt').textContent = 'Restart ↺';
+                    } else if (wp.hideOverlay) {
+                        document.getElementById('clickPrompt').textContent = 'Explore →';
+                    } else {
+                        document.getElementById('clickPrompt').textContent = 'Continue →';
+                    }
+                    
+                    isAnimating = false;
+                }
+            }
+            
+            updateCamera();
+        }
+        
+        function easeInOutQuart(x) {
+            return x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
+        }
+        
+        function updateLabels() {
+            labelElements.forEach(label => {
+                const vector = label.position.clone().project(camera);
+                
+                const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+                
+                label.element.style.left = x + 'px';
+                label.element.style.top = y + 'px';
+                label.element.style.transform = 'translate(-50%, -50%)';
+                
+                const distance = camera.position.distanceTo(label.position);
+                const opacity = Math.max(0, Math.min(1, 1 - (distance - 5) / 80));
+                label.element.style.opacity = opacity * (label.isHighlight ? 1 : 0.5);
+                
+                if (vector.z > 1) {
+                    label.element.style.opacity = '0';
+                }
+            });
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001;
+            
+            updateFadeIn();
+            
+            allNodes.forEach((node, i) => {
+                if (node.userData && node.userData.originalPositions) {
+                    const positions = node.geometry.attributes.position.array;
+                    const orig = node.userData.originalPositions;
+                    
+                    for (let j = 0; j < positions.length; j += 3) {
+                        positions[j] = orig[j] + Math.sin(time * 0.2 + j * 0.005) * 0.25;
+                        positions[j + 1] = orig[j + 1] + Math.cos(time * 0.15 + j * 0.005) * 0.25;
+                        positions[j + 2] = orig[j + 2] + Math.sin(time * 0.18 + j * 0.005) * 0.25;
+                    }
+                    node.geometry.attributes.position.needsUpdate = true;
+                }
+                
+                if (node.userData && node.userData.sprite) {
+                    const highlighted = node.userData.highlighted;
+                    const pulse = Math.sin(time * 2 + i) * 0.5 + 0.5;
+                    const baseScale = node.userData.baseScale || 1;
+                    
+                    if (highlighted) {
+                        node.material.opacity = 0.95 + pulse * 0.05;
+                        const scale = baseScale * (1.1 + pulse * 0.1);
+                        node.scale.set(scale, scale, 1);
+                    } else {
+                        node.material.opacity = 0.8;
+                        node.scale.set(baseScale, baseScale, 1);
+                    }
+                }
+            });
+            
+            updateLabels();
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
+
