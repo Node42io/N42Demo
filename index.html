@@ -939,6 +939,34 @@
             return texture;
         }
         
+        // Create clean solid glow texture for key nodes (no internal dots)
+        function createCleanGlowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            
+            // Create a smooth radial gradient glow
+            const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.15, 'rgba(255, 255, 255, 0.95)');
+            gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.7)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
+            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.15)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(64, 64, 64, 0, Math.PI * 2);
+            ctx.fill();
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+        
+        let keyNodeTexture; // Clean glow texture for key nodes
+        
         // Node colors - Siemens Healthineers themed (teal/petrol)
         const nodeColors = {
             company: 0x00a6a0,      // Teal - SHS brand
@@ -1022,6 +1050,7 @@
             container.appendChild(renderer.domElement);
             
             sphereTexture = createSphereTexture();
+            keyNodeTexture = createCleanGlowTexture();
             
             // Lighting - teal accent
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.12);
@@ -1164,17 +1193,12 @@
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
             
-            // On mobile, make particles smaller and more transparent to avoid cluttering key nodes
-            const isMobileView = window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            const particleSize = isMobileView ? 0.15 : 0.45;
-            const particleOpacity = isMobileView ? 0.25 : 0.85;
-            
             const material = new THREE.PointsMaterial({
-                size: particleSize,
+                size: 0.45,
                 map: sphereTexture,
                 vertexColors: true,
                 transparent: true,
-                opacity: particleOpacity,
+                opacity: 0.85,
                 sizeAttenuation: true,
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
@@ -1191,8 +1215,9 @@
             const lighterColor = color.clone();
             lighterColor.lerp(new THREE.Color(0xffffff), 0.3);
             
+            // Use clean glow texture for solid appearance (no internal dots)
             const spriteMaterial = new THREE.SpriteMaterial({
-                map: sphereTexture,
+                map: keyNodeTexture,
                 color: lighterColor,
                 transparent: true,
                 opacity: 0.9,
